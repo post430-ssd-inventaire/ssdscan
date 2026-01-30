@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>SSD Scan • Production Manager</title>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --slate-950: #0a0e14;
+      --slate-900: #141920;
+      --slate-800: #1e2530;
+      --slate-700: #2d3748;
+      --slate-600: #4a5568;
+      --slate-400: #a0aec0;
+      --slate-200: #e2e8f0;
+      --orange-500: #ff6b35;
+      --orange-400: #ff8c61;
+      --green-500: #10b981;
+      --blue-500: #3b82f6;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body { 
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--slate-950) 0%, var(--slate-900) 100%);
+      color: var(--slate-200);
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--orange-500), var(--orange-400));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 18px;
+      color: white;
+      box-shadow: 0 4px 14px rgba(255, 107, 53, 0.3);
+    }
+
+    h1 { 
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--slate-400);
+      font-size: 14px;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: rgba(30, 37, 48, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      animation: cardSlideUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes cardSlideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .row { 
+      margin: 24px 0;
+    }
+
+    label { 
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--slate-400);
+      margin-bottom: 10px;
+    }
+
+    .disk-display {
+      background: var(--slate-900);
+      border: 2px solid var(--slate-700);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .disk-display::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.1), transparent);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { left: -100%; }
+      50% { left: 100%; }
+    }
+
+    .disk-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--orange-500);
+      text-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+      position: relative;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: var(--slate-800);
+      border: 1px solid var(--slate-700);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate-300);
+      transition: all 0.3s ease;
+    }
+
+    .status-badge.connected {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: var(--green-500);
+      color: var(--green-500);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--slate-500);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-badge.connected .status-dot {
+      background: var(--green-500);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .tabs { 
+      display: flex;
+      gap: 12px;
+      background: var(--slate-900);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--slate-700);
+    }
+
+    .tab { 
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--slate-400);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .tab:not(:disabled):hover {
+      background: rgba(255, 107, 53, 0.1);
+      color: var(--orange-400);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--orange-500), var(--orange-400));
+      color: white;
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    .tab:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 16px;
+      background: var(--slate-900);
+      border: 2px solid var(--slate-700);
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--orange-500);
+      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    input:disabled, select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input::placeholder {
+      color: var(--slate-500);
+    }
+
+    button.primary {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--orange-500), var(--orange-400));
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 4px 14px rgba(255, 107, 53, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button.primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    button.primary:hover:not(:disabled)::before {
+      left: 100%;
+    }
+
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    button.primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button.primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .hint { 
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    .hint code {
+      background: var(--slate-800);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--orange-400);
+    }
+
+    .auto-value {
+      color: var(--orange-400);
+      font-weight: 600;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .log-panel {
+      background: var(--slate-950);
+      border: 1px solid var(--slate-700);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--slate-400);
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .log-panel::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .log-panel::-webkit-scrollbar-track {
+      background: var(--slate-900);
+      border-radius: 4px;
+    }
+
+    .log-panel::-webkit-scrollbar-thumb {
+      background: var(--slate-700);
+      border-radius: 4px;
+    }
+
+    .hidden { 
+      display: none !important;
+    }
+
+    #gbtn {
+      margin-top: 12px;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 16px; }
+      .card { padding: 24px; }
+      h1 { font-size: 28px; }
+      .disk-name { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">SSD</div>
+        <h1>Production Manager</h1>
+      </div>
+      <div class="subtitle">Gestion des disques de tournage</div>
+    </div>
+
+    <div class="card">
+      <div class="row hint">
+        Scanner le QR code pour ouvrir : <code>?d=SSD04_41</code>
+      </div>
+
+      <div class="row">
+        <label>Disque détecté</label>
+        <div class="disk-display">
+          <div id="disk" class="disk-name">—</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Statut de connexion</label>
+        <div id="status" class="status-badge">
+          <span class="status-dot"></span>
+          Non connecté
+        </div>
+        <div id="gbtn"></div>
+      </div>
+
+      <div class="row tabs">
+        <button id="tabRetour" class="tab" disabled>↩ Retour rapide</button>
+        <button id="tabEnvoi" class="tab" disabled>↗ Envoi disque</button>
+      </div>
+
+      <!-- RETOUR -->
+      <div id="paneRetour" class="row hidden">
+        <div class="hint" style="margin-bottom: 16px;">
+          Le technicien sera détecté automatiquement via votre compte Google.
+        </div>
+
+        <label>Notes (optionnel)</label>
+        <input id="notesRetour" placeholder="Ajouter des notes..." disabled />
+        <div class="hint">Les notes seront ajoutées à la colonne I</div>
+
+        <button id="btnRetour" class="primary" disabled style="margin-top: 20px;">
+          ✓ Confirmer le retour
+        </button>
+        <div class="hint">Met à jour : Statut (B) • Date retour (G) • Technicien (H) • Rappels (J)</div>
+      </div>
+
+      <!-- ENVOI -->
+      <div id="paneEnvoi" class="row hidden">
+        <label>Projet</label>
+        <input id="projet" placeholder="Nom du projet" disabled />
+        <div class="hint">Colonne C du Google Sheet</div>
+
+        <label style="margin-top: 20px;">Coordonnateur</label>
+        <select id="coordo" disabled>
+          <option value="">— Sélectionner —</option>
+        </select>
+        <div class="hint">Colonne D du Google Sheet</div>
+
+        <div class="hint" style="margin-top: 20px;">
+          Envoyé par : <span id="autoSender" class="auto-value">—</span> (auto-détecté)
+        </div>
+
+        <label style="margin-top: 20px;">Notes (optionnel)</label>
+        <input id="notesEnvoi" placeholder="Ajouter des notes..." disabled />
+        <div class="hint">Remplace le contenu de la colonne I</div>
+
+        <button id="btnEnvoi" class="primary" disabled style="margin-top: 24px;">
+          ✓ Confirmer l'envoi
+        </button>
+        <div class="hint">
+          Met à jour : Projet (C) • Coordo (D) • Date (E) • Envoyé par (F) • Statut (B)
+          <br>Archive automatiquement si un retour existe déjà
+        </div>
+      </div>
+
+      <pre id="log" class="log-panel">En attente du disque via l'URL (?d=...)</pre>
+    </div>
+  </div>
+
+  <script>
+    function parseDiskFromUrl(){
+      try{
+        const href = window.location.href;
+        const qs = new URLSearchParams(window.location.search || "");
+        let d = (qs.get("d") || qs.get("disque") || qs.get("disk") || "").trim();
+
+        if(!d && window.location.hash){
+          const h = window.location.hash.replace(/^#/, "");
+          const hqs = new URLSearchParams(h);
+          d = (hqs.get("d") || hqs.get("disque") || hqs.get("disk") || "").trim();
+        }
+
+        if(!d){
+          const p = decodeURIComponent(window.location.pathname || "");
+          const m = p.match(/(SSD\d+_\d+)/i);
+          if(m) d = m[1];
+        }
+
+        return d;
+      }catch(e){
+        return "";
+      }
+    }
+
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw-lKIhPcRtXBbCXp9SrQN7ULysA1qHcU0pR4wE4JjsB1_P5VkoEFZiNLYxgo6Xt96P/exec";
+    const API_KEY   = "Cinelande83!";
+    const GOOGLE_CLIENT_ID = "450299626245-4ae7g9euggo336o3i731ik8nee6rv47j.apps.googleusercontent.com";
+
+    const EMAIL_TO_TECH = {
+      "panyszakjeremie@gmail.com": "Jérémie",
+      "benoit.thomassin@hotmail.com": "Benoit",
+      "rosalie.beginnadeau@gmail.com": "Rosalie",
+      "malekaboura123@gmail.com": "Malek",
+      "ericbolduc9@gmail.com": "Eric",
+      "isabo78@hotmail.com": "Isabelle",
+      "laura.derrey@gmail.com": "Laura",
+      "joh.waxx@gmail.com": "Joanie",
+    };
+
+    const FALLBACK_COORDOS = ["Isabelle", "Eric", "Laura", "Joanie"];
+
+    const logEl = document.getElementById("log");
+    const diskEl = document.getElementById("disk");
+    const statusEl = document.getElementById("status");
+
+    const tabRetour = document.getElementById("tabRetour");
+    const tabEnvoi = document.getElementById("tabEnvoi");
+    const paneRetour = document.getElementById("paneRetour");
+    const paneEnvoi = document.getElementById("paneEnvoi");
+
+    const btnRetour = document.getElementById("btnRetour");
+
+    const projetEl = document.getElementById("projet");
+    const coordoEl = document.getElementById("coordo");
+    const btnEnvoi = document.getElementById("btnEnvoi");
+
+    const notesRetourEl = document.getElementById("notesRetour");
+    const notesEnvoiEl = document.getElementById("notesEnvoi");
+    const autoSenderEl = document.getElementById("autoSender");
+
+    function log(t){ logEl.textContent = t; }
+    function setPane(which){
+      paneRetour.classList.toggle("hidden", which !== "retour");
+      paneEnvoi.classList.toggle("hidden", which !== "envoi");
+      
+      tabRetour.classList.toggle("active", which === "retour");
+      tabEnvoi.classList.toggle("active", which === "envoi");
+    }
+
+    let disque = parseDiskFromUrl();
+    
+    if (!disque) {
+      diskEl.textContent = "—";
+      log("Aucun disque détecté dans l'URL.");
+    } else {
+      diskEl.textContent = disque;
+      log("Disque détecté: " + disque + "\nConnectez-vous puis choisissez Retour/Envoi.");
+    }
+
+    function fillSelect(sel, values){
+      while (sel.options.length > 1) sel.remove(1);
+      for (const v of values){
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      }
+    }
+
+    let idToken = "";
+    let userEmail = "";
+
+    function refresh(){
+      const authed = !!(disque && idToken);
+      tabRetour.disabled = !authed;
+      tabEnvoi.disabled = !authed;
+
+      projetEl.disabled = !authed;
+      coordoEl.disabled = !authed;
+      notesRetourEl.disabled = !authed;
+      notesEnvoiEl.disabled = !authed;
+
+      btnRetour.disabled = !authed;
+      btnEnvoi.disabled = !(authed && projetEl.value.trim() && coordoEl.value);
+    }
+
+    async function loadConfigLists(){
+      try{
+        const res = await fetch(WEBAPP_URL + "?action=config");
+        const data = await res.json();
+        fillSelect(coordoEl, data.coordos || FALLBACK_COORDOS);
+      }catch(e){
+        fillSelect(coordoEl, FALLBACK_COORDOS);
+      }
+    }
+    loadConfigLists();
+
+    function parseJwtEmail(jwt) {
+      try {
+        const payload = jwt.split(".")[1];
+        const b64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const json = decodeURIComponent(atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+        const obj = JSON.parse(json);
+        return (obj.email || "").toLowerCase().trim();
+      } catch (e) { return ""; }
+    }
+
+    function onGoogleCredentialResponse(response){
+      const token = response.credential;
+      const email = parseJwtEmail(token);
+
+      userEmail = email;
+      idToken = token;
+
+      statusEl.innerHTML = '<span class="status-dot"></span>Connecté: ' + email;
+      statusEl.classList.add('connected');
+
+      const suggested = EMAIL_TO_TECH[email] || "—";
+      autoSenderEl.textContent = suggested;
+
+      setPane("retour");
+      refresh();
+    }
+
+    window.onload = () => {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: onGoogleCredentialResponse,
+        auto_select: false,
+        cancel_on_tap_outside: false
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("gbtn"),
+        { theme: "filled_black", size: "large", width: "100%" }
+      );
+      try { google.accounts.id.prompt(); } catch(e) {}
+      refresh();
+    };
+
+    tabRetour.addEventListener("click", () => { setPane("retour"); });
+    tabEnvoi.addEventListener("click", () => { setPane("envoi"); });
+
+    projetEl.addEventListener("input", refresh);
+    coordoEl.addEventListener("change", refresh);
+
+    async function post(payload){
+      const res = await fetch(WEBAPP_URL, { method:"POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+      return await res.text();
+    }
+
+    btnRetour.addEventListener("click", async ()=>{
+      try{
+        const payload = {
+          apiKey: API_KEY,
+          id_token: idToken,
+          disque,
+          action: "retour_rapide",
+          notes: (notesRetourEl.value || "").trim()
+        };
+        log("Envoi du retour en cours...");
+        const txt = await post(payload);
+        log(txt);
+        alert(txt);
+      }catch(e){
+        log("ERREUR: " + e);
+        alert("Erreur: " + e);
+      }
+    });
+
+    btnEnvoi.addEventListener("click", async ()=>{
+      try{
+        const payload = {
+          apiKey: API_KEY,
+          id_token: idToken,
+          disque,
+          action: "envoi",
+          projet: projetEl.value.trim(),
+          coordo: coordoEl.value,
+          notes: (notesEnvoiEl.value || "").trim()
+        };
+        log("Envoi en cours...");
+        const txt = await post(payload);
+        log(txt);
+        alert(txt);
+      }catch(e){
+        log("ERREUR: " + e);
+        alert("Erreur: " + e);
+      }
+    });
+  
+    window.addEventListener("popstate", ()=>{ 
+      disque = parseDiskFromUrl(); 
+      diskEl.textContent = disque || "—";
+      refresh && refresh(); 
+    });
+  </script>
+</body>
+</html>
